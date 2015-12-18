@@ -201,7 +201,6 @@ export default class Server {
       fullPath += path;
     }
 
-    console.log(fullPath);
     return fullPath;
   }
 
