@@ -97,18 +97,23 @@ export default class Server {
     });
   }
 
-  create(type, overrides, collectionFromCreateList, sequenceFromCreateList) {
-    var collectionName = pluralize(type);
-    var collection = collectionFromCreateList || this.db[collectionName];
-    var sequence = sequenceFromCreateList || (collection ? collection.length : 0);
+  create(type, overrides, collectionFromCreateList) {
+    this.factorySequences = this.factorySequences || {};
+    this.factorySequences[type] = this.factorySequences[type] || 0;
+    this.factorySequences[type]++;
+    var sequence = this.factorySequences[type] - 1;
+
     if (!this._factoryMap || !this._factoryMap[type]) {
       throw "You're trying to create a " + type + ", but no factory for this type was found";
     }
+    
     var OriginalFactory = this._factoryMap[type];
     var Factory = OriginalFactory.extend(overrides);
     var factory = new Factory();
-
     var attrs = factory.build(sequence);
+    
+    var collectionName = pluralize(type);
+    var collection = collectionFromCreateList || this.db[collectionName];
 
     return collection.insert(attrs);
   }
@@ -119,8 +124,7 @@ export default class Server {
     var collection = this.db[collectionName];
 
     for (var i = 0; i < amount; i++) {
-      var sequence = i;
-      list.push(this.create(type, overrides, collection, sequence));
+      list.push(this.create(type, overrides, collection));
     }
 
     return list;
